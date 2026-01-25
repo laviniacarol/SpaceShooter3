@@ -46,7 +46,8 @@ namespace SpaceShooter3
                 this.Controls.Add(stars[i]);
             }
 
-            MoveBgTimer.Start();
+            timer1.Tick += MoveBgTimer_Tick;
+            timer1.Start();
         }
 
         private void MoveBgTimer_Tick(object sender, EventArgs e)
@@ -100,10 +101,6 @@ namespace SpaceShooter3
         }
 
         private void pictureBox1_Click(object sender, EventArgs e)
-        {
-        }
-
-        private void MoveBgTimer(object sender, EventArgs e)
         {
 
         }

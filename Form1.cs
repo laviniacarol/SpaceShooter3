@@ -10,6 +10,7 @@ namespace SpaceShooter3
     {
         WindowsMediaPlayer gameMedia;
         WindowsMediaPlayer shootMedia;
+        WindowsMediaPlayer explosionMedia;
 
         PictureBox[] stars;
         PictureBox[] munitions;
@@ -52,6 +53,7 @@ namespace SpaceShooter3
             backgroundSpeed = 4;
             munitionSpeed = 20;
             enemiesSpeed = 6;
+        
 
             rnd = new Random();
 
@@ -118,13 +120,17 @@ namespace SpaceShooter3
 
             gameMedia = new WindowsMediaPlayer();
             shootMedia = new WindowsMediaPlayer();
+            explosionMedia = new WindowsMediaPlayer();
 
             gameMedia.URL = Path.Combine(basePath, "songs", "GameSong.mp3");
             shootMedia.URL = Path.Combine(basePath, "songs", "shoot.mp3");
+            explosionMedia.URL = Path.Combine(basePath, "songs", "boom.mp3");
 
             gameMedia.settings.setMode("loop", true);
             gameMedia.settings.volume = 5;
             shootMedia.settings.volume = 10;
+
+            explosionMedia.settings.volume = 6;
 
             gameMedia.controls.play();
         }
@@ -214,6 +220,7 @@ namespace SpaceShooter3
                 if (munitions[i].Visible)
                 {
                     munitions[i].Top -= munitionSpeed;
+                    Collision();
 
                     if (munitions[i].Top < 0)
                         munitions[i].Visible = false;
@@ -224,6 +231,34 @@ namespace SpaceShooter3
         private void MoveEnemiesTimer_Tick(object sender, EventArgs e)
         {
             MoveEnemies(enemies, enemiesSpeed);
+            Collision();
+        }
+
+        private void Collision()
+        {
+            for (int i = 0; i < enemies.Length; i++)
+            {
+                for (int j = 0; j < munitions.Length; j++)
+                {
+                    if (munitions[j].Visible &&
+                        enemies[i].Visible &&
+                        munitions[j].Bounds.IntersectsWith(enemies[i].Bounds))
+                    {
+                        explosionMedia.controls.play();
+
+                        munitions[j].Visible = false;
+                        enemies[i].Location = new Point((i + 1) * 50, -100);
+                    }
+                }
+
+                if (Player.Bounds.IntersectsWith(enemies[i].Bounds))
+                {
+                    explosionMedia.settings.volume = 30;
+                    explosionMedia.controls.play();
+
+                    Player.Visible = false;
+                }
+            }
         }
 
         private void MoveEnemies(PictureBox[] array, int speed)

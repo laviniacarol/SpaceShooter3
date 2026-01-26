@@ -1,71 +1,160 @@
 using System;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
+using WMPLib;
 
 namespace SpaceShooter3
 {
     public partial class Form1 : Form
     {
+        WindowsMediaPlayer gameMedia;
+        WindowsMediaPlayer shootMedia;
+
         PictureBox[] stars;
-        int backgroundspeed;
+        PictureBox[] munitions;
+        PictureBox[] enemies;
+
+        int enemiesSpeed;
+        int backgroundSpeed;
+        int playerSpeed = 15;
+        int munitionSpeed;
+
+        Image enemie1;
+        Image enemie2;
+        Image enemie3;
+        Image boss1;
+        Image boss2;
+        Image munitionImg;
+
         Random rnd;
-        int playerSpeed = 5;
 
         public Form1()
         {
             InitializeComponent();
 
-            this.KeyPreview = true;
-            this.KeyDown += Form1_KeyDown;
-            this.KeyUp += Form1_KeyUp;
+            KeyPreview = true;
+            KeyDown += Form1_KeyDown;
+            KeyUp += Form1_KeyUp;
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            backgroundspeed = 4;
-            stars = new PictureBox[10];
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+
+            enemie1 = Image.FromFile(Path.Combine(basePath, "assets", "E1.png"));
+            enemie2 = Image.FromFile(Path.Combine(basePath, "assets", "E2.png"));
+            enemie3 = Image.FromFile(Path.Combine(basePath, "assets", "E3.png"));
+            boss1 = Image.FromFile(Path.Combine(basePath, "assets", "Boss1.png"));
+            boss2 = Image.FromFile(Path.Combine(basePath, "assets", "Boss2.png"));
+            munitionImg = Image.FromFile(Path.Combine(basePath, "assets", "munition.png"));
+
+            backgroundSpeed = 4;
+            munitionSpeed = 20;
+            enemiesSpeed = 6;
+
             rnd = new Random();
+
+            stars = new PictureBox[10];
 
             for (int i = 0; i < stars.Length; i++)
             {
-                stars[i] = new PictureBox();
-                stars[i].BorderStyle = BorderStyle.None;
-                stars[i].Location = new Point(rnd.Next(20, 500), rnd.Next(-10, 400));
-
-                if (i % 2 == 1)
+                stars[i] = new PictureBox
                 {
-                    stars[i].Size = new Size(2, 2);
-                    stars[i].BackColor = Color.Wheat;
-                }
-                else
-                {
-                    stars[i].Size = new Size(3, 3);
-                    stars[i].BackColor = Color.DarkGray;
-                }
+                    BorderStyle = BorderStyle.None,
+                    Location = new Point(
+                        rnd.Next(20, Width),
+                        rnd.Next(-Height, Height)
+                    ),
+                    Size = (i % 2 == 0) ? new Size(3, 3) : new Size(2, 2),
+                    BackColor = (i % 2 == 0) ? Color.DarkGray : Color.Wheat
+                };
 
-                this.Controls.Add(stars[i]);
+                Controls.Add(stars[i]);
             }
 
-            timer1.Tick += MoveBgTimer_Tick;
-            timer1.Start();
+            munitions = new PictureBox[3];
+
+            for (int i = 0; i < munitions.Length; i++)
+            {
+                munitions[i] = new PictureBox
+                {
+                    Size = new Size(8, 8),
+                    Image = munitionImg,
+                    SizeMode = PictureBoxSizeMode.Zoom,
+                    BorderStyle = BorderStyle.None,
+                    Visible = false
+                };
+
+                Controls.Add(munitions[i]);
+            }
+
+            enemies = new PictureBox[10];
+
+            for (int i = 0; i < enemies.Length; i++)
+            {
+                enemies[i] = new PictureBox
+                {
+                    Size = new Size(40, 40),
+                    SizeMode = PictureBoxSizeMode.Zoom,
+                    BorderStyle = BorderStyle.None,
+                    Visible = false,
+                    Location = new Point((i + 1) * 50, -50)
+                };
+
+                Controls.Add(enemies[i]);
+            }
+
+            enemies[0].Image = boss1;
+            enemies[1].Image = enemie2;
+            enemies[2].Image = enemie3;
+            enemies[3].Image = enemie3;
+            enemies[4].Image = enemie1;
+            enemies[5].Image = enemie3;
+            enemies[6].Image = enemie2;
+            enemies[7].Image = enemie3;
+            enemies[8].Image = enemie2;
+            enemies[9].Image = boss2;
+
+            gameMedia = new WindowsMediaPlayer();
+            shootMedia = new WindowsMediaPlayer();
+
+            gameMedia.URL = Path.Combine(basePath, "songs", "GameSong.mp3");
+            shootMedia.URL = Path.Combine(basePath, "songs", "shoot.mp3");
+
+            gameMedia.settings.setMode("loop", true);
+            gameMedia.settings.volume = 5;
+            shootMedia.settings.volume = 10;
+
+            gameMedia.controls.play();
         }
 
         private void MoveBgTimer_Tick(object sender, EventArgs e)
         {
-            for (int i = 0; i < stars.Length; i++)
+            foreach (var star in stars)
             {
-                stars[i].Top += backgroundspeed;
-                if (stars[i].Top >= this.Height)
-                    stars[i].Top = -stars[i].Height;
+                star.Top += backgroundSpeed;
+                if (star.Top >= Height)
+                    star.Top = -star.Height;
             }
         }
 
         private void Form1_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Left) LeftMoveTimer.Start();
-            if (e.KeyCode == Keys.Right) RightMoveTimer.Start();
-            if (e.KeyCode == Keys.Up) UpMoveTimer.Start();
-            if (e.KeyCode == Keys.Down) DownMoveTimer.Start();
+            if (e.KeyCode == Keys.Left && !LeftMoveTimer.Enabled)
+                LeftMoveTimer.Start();
+
+            if (e.KeyCode == Keys.Right && !RightMoveTimer.Enabled)
+                RightMoveTimer.Start();
+
+            if (e.KeyCode == Keys.Up && !UpMoveTimer.Enabled)
+                UpMoveTimer.Start();
+
+            if (e.KeyCode == Keys.Down && !DownMoveTimer.Enabled)
+                DownMoveTimer.Start();
+
+            if (e.KeyCode == Keys.Space)
+                Shoot();
         }
 
         private void Form1_KeyUp(object sender, KeyEventArgs e)
@@ -84,14 +173,8 @@ namespace SpaceShooter3
 
         private void RightMoveTimer_Tick(object sender, EventArgs e)
         {
-            if (Player.Right < 500)
+            if (Player.Right < Width - 10)
                 Player.Left += playerSpeed;
-        }
-
-        private void DownMoveTimer_Tick(object sender, EventArgs e)
-        {
-            if (Player.Top < 400)
-                Player.Top += playerSpeed;
         }
 
         private void UpMoveTimer_Tick(object sender, EventArgs e)
@@ -100,9 +183,61 @@ namespace SpaceShooter3
                 Player.Top -= playerSpeed;
         }
 
-        private void pictureBox1_Click(object sender, EventArgs e)
+        private void DownMoveTimer_Tick(object sender, EventArgs e)
         {
+            if (Player.Bottom < Height - 10)
+                Player.Top += playerSpeed;
+        }
 
+        private void Shoot()
+        {
+            foreach (var m in munitions)
+            {
+                if (!m.Visible)
+                {
+                    m.Location = new Point(
+                        Player.Left + Player.Width / 2 - m.Width / 2,
+                        Player.Top
+                    );
+
+                    m.Visible = true;
+                    shootMedia.controls.play();
+                    break;
+                }
+            }
+        }
+
+        private void MoveMunitionsTimer_Tick(object sender, EventArgs e)
+        {
+            for (int i = 0; i < munitions.Length; i++)
+            {
+                if (munitions[i].Visible)
+                {
+                    munitions[i].Top -= munitionSpeed;
+
+                    if (munitions[i].Top < 0)
+                        munitions[i].Visible = false;
+                }
+            }
+        }
+
+        private void MoveEnemiesTimer_Tick(object sender, EventArgs e)
+        {
+            MoveEnemies(enemies, enemiesSpeed);
+        }
+
+        private void MoveEnemies(PictureBox[] array, int speed)
+        {
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i].Visible = true;
+                array[i].Top += speed;
+
+                if (array[i].Top > Height)
+                {
+                    array[i].Location = new Point((i + 1) * 50, -200);
+                }
+            }
         }
     }
 }

@@ -10,8 +10,10 @@
   <br>
   Foi um projeto simples, mas muito divertido e proveitoso para se fazer em um domingo à tarde. 
   <br>
+  
+    🎮✨
+
   <br>
-  <p>Link do tutorial do Ethnosis https://www.youtube.com/watch?v=b5nIC9lobVI&list=PL-K0viiuJ2ReKWkb2-zWT2Fb3QXALsed3&index=6 </p>
+  <p> Link do canal do Ethnosis: <br> https://www.youtube.com/@Ethnosiz </p>
   <br>
-  🎮✨
 </p>

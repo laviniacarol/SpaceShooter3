@@ -52,7 +52,6 @@ namespace SpaceShooter3
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            // Label inicializada corretamente
             label.Text = "";
             label.Visible = false;
             label.Location = new Point((this.ClientSize.Width - label.Width) / 2, 150);
@@ -159,12 +158,9 @@ namespace SpaceShooter3
             StartTimers();
         }
 
-        // ==================== LABEL ====================
         private void label_Click(object sender, EventArgs e)
         {
-            // vazio, não interfere
         }
-        // ================================================
 
         private void MoveBgTimer_Tick(object sender, EventArgs e)
         {
@@ -361,7 +357,7 @@ namespace SpaceShooter3
         private void GameOver(string message)
         {
             label.Text = message;
-            label.Location = new Point(120, 120);
+            label.Location = new Point((this.ClientSize.Width - label.Width) / 2, 150);
             label.Visible = true;
             ReplayBtn.Visible = true;
             ExitBtn.Visible = true;

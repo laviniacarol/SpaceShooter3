@@ -25,5 +25,13 @@ and to get familiar with the Visual Studio tool, since until then I had only use
 <br>
 I faced some challenges early on while creating the project, and later when working with timers, trying to build the logic for hitting enemy ships.
 <br>
+
+<h1>RESULTADO/RESULT</h1>
+
+https://github.com/user-attachments/assets/8b101037-47a9-4699-9e4c-7a8ef979a1a5
+
+
+
+
 It was a simple project, but very fun and rewarding to do on a Sunday afternoon.
 </p>

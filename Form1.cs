@@ -28,6 +28,12 @@ namespace SpaceShooter3
         int enemiesSpeed = 6;
         int enemiesMunitionSpeed = 6;
 
+        int score;
+        int level;
+        int dificulty;
+       
+
+
         Image enemie1, enemie2, enemie3, boss1, boss2, munitionImg;
         Random rnd = new Random();
 
@@ -44,6 +50,18 @@ namespace SpaceShooter3
             pause = false;
             gameIsOver = false;
             label.Visible = false;
+
+            score = 0;
+            level = 1;
+            dificulty = 9;
+
+            backgroundSpeed = 4;
+            playerSpeed = 15;
+            enemiesSpeed = 6;
+            munitionSpeed = 20;
+            enemiesMunitionSpeed = 4;
+
+
 
             string basePath = AppDomain.CurrentDomain.BaseDirectory;
 
@@ -149,6 +167,50 @@ namespace SpaceShooter3
             }
         }
 
+
+        private void Collision()
+        {
+            foreach (var m in munitions)
+            {
+                if (!m.Visible) continue;
+
+                for (int i = 0; i < enemies.Length; i++)
+                {
+                    if (m.Bounds.IntersectsWith(enemies[i].Bounds))
+                    {
+                        PlayExplosion();
+
+                        score++;
+                        scorelbl.Text = score.ToString("D2");
+
+                        m.Visible = false;
+                        enemies[i].Top = -rnd.Next(100, 600);
+                        enemies[i].Left = rnd.Next(0, ClientSize.Width - enemies[i].Width);
+
+                        if (score % 30 == 0)
+                        {
+                            level++;
+                            levellbl.Text = level.ToString("D2");
+
+                            if (enemiesSpeed < 10 && enemiesMunitionSpeed < 10 && dificulty > 0)
+                            {
+                                dificulty--;
+                                enemiesSpeed++;
+                                enemiesMunitionSpeed++;
+                            }
+
+                            if (level == 10)
+                                GameOver("YOU WIN!");
+                        }
+
+                        return;
+                    }
+                }
+            }
+        }
+
+
+
         private void MoveEnemiesTimer_Tick(object sender, EventArgs e)
         {
             foreach (var e1 in enemies)
@@ -179,24 +241,12 @@ namespace SpaceShooter3
 
                 m.Top -= munitionSpeed;
                 if (m.Top < 0)
-                {
                     m.Visible = false;
-                    continue;
-                }
-
-                foreach (var e1 in enemies)
-                {
-                    if (m.Bounds.IntersectsWith(e1.Bounds))
-                    {
-                        PlayExplosion();
-                        m.Visible = false;
-                        e1.Top = -rnd.Next(100, 600);
-                        e1.Left = rnd.Next(0, ClientSize.Width - e1.Width);
-                        break;
-                    }
-                }
             }
+
+            Collision();
         }
+
 
         private void EnemiesMunitionTimer_Tick(object sender, EventArgs e)
         {
@@ -215,9 +265,11 @@ namespace SpaceShooter3
                     Player.Visible = false;
                     PlayExplosion();
                     GameOver("GAME OVER");
+                    return;
                 }
             }
         }
+
 
         private void LeftMoveTimer_Tick(object sender, EventArgs e)
         {
@@ -256,8 +308,26 @@ namespace SpaceShooter3
             RightMoveTimer.Stop();
             UpMoveTimer.Stop();
             DownMoveTimer.Stop();
-        }
 
+            if(e.KeyCode == Keys.P)
+            {
+                pause = !pause;
+                if (pause)
+                {
+                    StopTimers();
+                    gameMedia.controls.pause();
+                    label.Text = "PAUSED";
+                    CenterLabel();
+                    label.Visible = true;
+                }
+                else
+                {
+                    StartTimers();
+                    gameMedia.controls.play();
+                    label.Visible = false;
+                }
+            }
+        }
         private void Shoot()
         {
             foreach (var m in munitions)
@@ -277,20 +347,26 @@ namespace SpaceShooter3
 
         private void EnemiesShoot()
         {
-            foreach (var m in enemiesMunition)
+            int maxBullets = enemiesMunition.Length - dificulty;
+            if (maxBullets < 1) maxBullets = 1;
+
+            for (int i = 0; i < maxBullets; i++)
             {
-                if (!m.Visible)
+                if (!enemiesMunition[i].Visible)
                 {
-                    int i = rnd.Next(enemies.Length);
-                    m.Location = new Point(
-                        enemies[i].Left + enemies[i].Width / 2 - m.Width / 2,
-                        enemies[i].Bottom
+                    int e = rnd.Next(enemies.Length);
+
+                    enemiesMunition[i].Location = new Point(
+                        enemies[e].Left + enemies[e].Width / 2 - enemiesMunition[i].Width / 2,
+                        enemies[e].Bottom
                     );
-                    m.Visible = true;
+
+                    enemiesMunition[i].Visible = true;
                     break;
                 }
             }
         }
+
 
         private void GameOver(string text)
         {

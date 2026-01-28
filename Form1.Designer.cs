@@ -32,6 +32,8 @@
             ReplayBtn = new Button();
             ExitBtn = new Button();
             label = new Label();
+            scorelbl = new Label();
+            levellbl = new Label();
             ((System.ComponentModel.ISupportInitialize)Player).BeginInit();
             SuspendLayout();
             // 
@@ -113,16 +115,34 @@
             label.AutoSize = true;
             label.Font = new Font("New York Escape", 18F, FontStyle.Regular, GraphicsUnit.Point, 0);
             label.ForeColor = Color.Snow;
-            label.AutoSize = true;
-
-            label.PerformLayout();
-            label.Left = (ClientSize.Width - label.Width) / 2;
-            label.Top = 100;
-
+            label.Location = new Point(282, 100);
             label.Name = "label";
+            label.Size = new Size(0, 34);
             label.TabIndex = 5;
             label.TextAlign = ContentAlignment.MiddleCenter;
             label.Visible = false;
+            // 
+            // scorelbl
+            // 
+            scorelbl.AutoSize = true;
+            scorelbl.Font = new Font("New York Escape", 8.999999F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            scorelbl.ForeColor = Color.Yellow;
+            scorelbl.Location = new Point(39, 27);
+            scorelbl.Name = "scorelbl";
+            scorelbl.Size = new Size(76, 17);
+            scorelbl.TabIndex = 6;
+            scorelbl.Text = "SCORE:";
+            // 
+            // levellbl
+            // 
+            levellbl.AutoSize = true;
+            levellbl.Font = new Font("New York Escape", 8.999999F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            levellbl.ForeColor = Color.Yellow;
+            levellbl.Location = new Point(464, 27);
+            levellbl.Name = "levellbl";
+            levellbl.Size = new Size(71, 17);
+            levellbl.TabIndex = 7;
+            levellbl.Text = "LEVEL:";
             // 
             // Form1
             // 
@@ -130,6 +150,8 @@
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(0, 0, 64);
             ClientSize = new Size(582, 450);
+            Controls.Add(levellbl);
+            Controls.Add(scorelbl);
             Controls.Add(label);
             Controls.Add(ExitBtn);
             Controls.Add(ReplayBtn);
@@ -156,8 +178,9 @@
         private System.Windows.Forms.Timer EnemiesMunitionTimer;
         private Button ReplayBtn;
         private Button ExitBtn;
-        private Label label1;
+        private Label levellbl;
         private Label label2;
         private Label label;
+        private Label scorelbl;
     }
 }

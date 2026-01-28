@@ -8,43 +8,32 @@ namespace SpaceShooter3
 {
     public partial class Form1 : Form
     {
-        // Sons
+        // ===== ÁUDIO =====
         WindowsMediaPlayer gameMedia;
-        WindowsMediaPlayer shootMedia;
-        WindowsMediaPlayer explosionMedia;
 
-        // Objetos do jogo
+        // ===== OBJETOS =====
         PictureBox[] stars;
         PictureBox[] munitions;
         PictureBox[] enemies;
         PictureBox[] enemiesMunition;
 
-        // Variáveis de jogo
-        int score;
-        int level;
-        int dificulty;
+        // ===== ESTADO =====
         bool pause;
         bool gameIsOver;
 
-        int enemiesSpeed;
-        int backgroundSpeed;
+        // ===== CONFIG =====
+        int backgroundSpeed = 4;
         int playerSpeed = 15;
-        int munitionSpeed;
-        int enemiesMunitionSpeed;
+        int munitionSpeed = 20;
+        int enemiesSpeed = 6;
+        int enemiesMunitionSpeed = 6;
 
-        Image enemie1;
-        Image enemie2;
-        Image enemie3;
-        Image boss1;
-        Image boss2;
-        Image munitionImg;
-
-        Random rnd;
+        Image enemie1, enemie2, enemie3, boss1, boss2, munitionImg;
+        Random rnd = new Random();
 
         public Form1()
         {
             InitializeComponent();
-
             KeyPreview = true;
             KeyDown += Form1_KeyDown;
             KeyUp += Form1_KeyUp;
@@ -52,9 +41,9 @@ namespace SpaceShooter3
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            label.Text = "";
+            pause = false;
+            gameIsOver = false;
             label.Visible = false;
-            label.Location = new Point((this.ClientSize.Width - label.Width) / 2, 150);
 
             string basePath = AppDomain.CurrentDomain.BaseDirectory;
 
@@ -65,38 +54,24 @@ namespace SpaceShooter3
             boss2 = Image.FromFile(Path.Combine(basePath, "assets", "Boss2.png"));
             munitionImg = Image.FromFile(Path.Combine(basePath, "assets", "munition.png"));
 
-            pause = false;
-            gameIsOver = false;
-            score = 0;
-            level = 1;
-            dificulty = 9;
-
-            backgroundSpeed = 4;
-            munitionSpeed = 20;
-            enemiesSpeed = 6;
-            enemiesMunitionSpeed = 6;
-
-            rnd = new Random();
-
             stars = new PictureBox[10];
             for (int i = 0; i < stars.Length; i++)
             {
                 stars[i] = new PictureBox
                 {
-                    BorderStyle = BorderStyle.None,
-                    Location = new Point(rnd.Next(20, Width), rnd.Next(-Height, Height)),
-                    Size = (i % 2 == 0) ? new Size(3, 3) : new Size(2, 2),
-                    BackColor = (i % 2 == 0) ? Color.DarkGray : Color.Wheat
+                    Size = i % 2 == 0 ? new Size(3, 3) : new Size(2, 2),
+                    BackColor = Color.Gray,
+                    Location = new Point(rnd.Next(0, Width), rnd.Next(-Height, Height))
                 };
                 Controls.Add(stars[i]);
             }
 
-            munitions = new PictureBox[3];
+            munitions = new PictureBox[5];
             for (int i = 0; i < munitions.Length; i++)
             {
                 munitions[i] = new PictureBox
                 {
-                    Size = new Size(8, 8),
+                    Size = new Size(8, 16),
                     Image = munitionImg,
                     SizeMode = PictureBoxSizeMode.Zoom,
                     Visible = false
@@ -111,8 +86,7 @@ namespace SpaceShooter3
                 {
                     Size = new Size(40, 40),
                     SizeMode = PictureBoxSizeMode.Zoom,
-                    Visible = true,
-                    Location = new Point((i + 1) * 60, -rnd.Next(100, 600))
+                    Location = new Point((i + 1) * 50, -rnd.Next(100, 600))
                 };
                 Controls.Add(enemies[i]);
             }
@@ -141,93 +115,139 @@ namespace SpaceShooter3
             }
 
             gameMedia = new WindowsMediaPlayer();
-            shootMedia = new WindowsMediaPlayer();
-            explosionMedia = new WindowsMediaPlayer();
-
-            gameMedia.URL = Path.Combine(basePath, "songs", "GameSong.mp3");
-            shootMedia.URL = Path.Combine(basePath, "songs", "shoot.mp3");
-            explosionMedia.URL = Path.Combine(basePath, "songs", "boom.mp3");
-
             gameMedia.settings.setMode("loop", true);
-            gameMedia.settings.volume = 5;
-            shootMedia.settings.volume = 10;
-            explosionMedia.settings.volume = 8;
-
+            gameMedia.settings.volume = 15;
+            gameMedia.URL = Path.Combine(basePath, "songs", "GameSong.mp3");
             gameMedia.controls.play();
 
+            Player.BringToFront();
             StartTimers();
         }
 
-        private void label_Click(object sender, EventArgs e)
+        private void PlayExplosion()
         {
+            var boom = new WindowsMediaPlayer();
+            boom.settings.volume = 15;
+            boom.URL = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "songs", "boom.mp3");
+            boom.controls.play();
+        }
+
+        private void PlayShoot()
+        {
+            var shot = new WindowsMediaPlayer();
+            shot.settings.volume = 12;
+            shot.URL = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "songs", "shoot.mp3");
+            shot.controls.play();
         }
 
         private void MoveBgTimer_Tick(object sender, EventArgs e)
         {
-            foreach (var star in stars)
+            foreach (var s in stars)
             {
-                star.Top += backgroundSpeed;
-                if (star.Top >= Height) star.Top = -star.Height;
+                s.Top += backgroundSpeed;
+                if (s.Top > Height) s.Top = -s.Height;
             }
         }
 
         private void MoveEnemiesTimer_Tick(object sender, EventArgs e)
         {
-            MoveEnemies(enemies, enemiesSpeed);
-            MoveEnemiesMunition();
+            foreach (var e1 in enemies)
+            {
+                e1.Top += enemiesSpeed;
 
-            if (rnd.Next(0, 100) < 3) EnemiesShoot();
+                if (e1.Top > Height)
+                    e1.Top = -rnd.Next(100, 600);
 
-            Collision();
+                if (Player.Visible && e1.Bounds.IntersectsWith(Player.Bounds))
+                {
+                    Player.Visible = false;
+                    PlayExplosion();
+                    GameOver("GAME OVER");
+                    return;
+                }
+            }
+
+            if (rnd.Next(0, 100) < 3)
+                EnemiesShoot();
         }
 
         private void MoveMunitionsTimer_Tick(object sender, EventArgs e)
         {
             foreach (var m in munitions)
             {
-                if (m.Visible)
+                if (!m.Visible) continue;
+
+                m.Top -= munitionSpeed;
+                if (m.Top < 0)
                 {
-                    m.Top -= munitionSpeed;
-                    if (m.Top < 0) m.Visible = false;
+                    m.Visible = false;
+                    continue;
+                }
+
+                foreach (var e1 in enemies)
+                {
+                    if (m.Bounds.IntersectsWith(e1.Bounds))
+                    {
+                        PlayExplosion();
+                        m.Visible = false;
+                        e1.Top = -rnd.Next(100, 600);
+                        e1.Left = rnd.Next(0, ClientSize.Width - e1.Width);
+                        break;
+                    }
                 }
             }
         }
 
         private void EnemiesMunitionTimer_Tick(object sender, EventArgs e)
         {
-            MoveEnemiesMunition();
+            foreach (var m in enemiesMunition)
+            {
+                if (!m.Visible) continue;
+
+                m.Top += enemiesMunitionSpeed;
+
+                if (m.Top > Height)
+                    m.Visible = false;
+
+                if (Player.Visible && m.Bounds.IntersectsWith(Player.Bounds))
+                {
+                    m.Visible = false;
+                    Player.Visible = false;
+                    PlayExplosion();
+                    GameOver("GAME OVER");
+                }
+            }
         }
 
         private void LeftMoveTimer_Tick(object sender, EventArgs e)
         {
-            if (Player.Left > 10) Player.Left -= playerSpeed;
+            if (Player.Left > 0) Player.Left -= playerSpeed;
         }
 
         private void RightMoveTimer_Tick(object sender, EventArgs e)
         {
-            if (Player.Right < Width - 10) Player.Left += playerSpeed;
+            if (Player.Right < ClientSize.Width) Player.Left += playerSpeed;
         }
 
         private void UpMoveTimer_Tick(object sender, EventArgs e)
         {
-            if (Player.Top > 10) Player.Top -= playerSpeed;
+            if (Player.Top > 0) Player.Top -= playerSpeed;
         }
 
         private void DownMoveTimer_Tick(object sender, EventArgs e)
         {
-            if (Player.Bottom < Height - 10) Player.Top += playerSpeed;
+            if (Player.Bottom < ClientSize.Height) Player.Top += playerSpeed;
         }
 
         private void Form1_KeyDown(object sender, KeyEventArgs e)
         {
-            if (!pause)
-            {
-                if (e.KeyCode == Keys.Left) LeftMoveTimer.Start();
-                if (e.KeyCode == Keys.Right) RightMoveTimer.Start();
-                if (e.KeyCode == Keys.Up) UpMoveTimer.Start();
-                if (e.KeyCode == Keys.Down) DownMoveTimer.Start();
-                if (e.KeyCode == Keys.Space) Shoot();
-            }
+            if (pause || gameIsOver) return;
+
+            if (e.KeyCode == Keys.Left) LeftMoveTimer.Start();
+            if (e.KeyCode == Keys.Right) RightMoveTimer.Start();
+            if (e.KeyCode == Keys.Up) UpMoveTimer.Start();
+            if (e.KeyCode == Keys.Down) DownMoveTimer.Start();
+            if (e.KeyCode == Keys.Space) Shoot();
         }
 
         private void Form1_KeyUp(object sender, KeyEventArgs e)
@@ -236,29 +256,6 @@ namespace SpaceShooter3
             RightMoveTimer.Stop();
             UpMoveTimer.Stop();
             DownMoveTimer.Stop();
-
-            if (e.KeyCode == Keys.P)
-            {
-                if (!gameIsOver)
-                {
-                    if (pause)
-                    {
-                        StartTimers();
-                        label.Visible = false;
-                        gameMedia.controls.play();
-                        pause = false;
-                    }
-                    else
-                    {
-                        label.Text = "PAUSED";
-                        label.Location = new Point((this.ClientSize.Width - label.Width) / 2, 150);
-                        label.Visible = true;
-                        gameMedia.controls.pause();
-                        StopTimers();
-                        pause = true;
-                    }
-                }
-            }
         }
 
         private void Shoot()
@@ -272,7 +269,7 @@ namespace SpaceShooter3
                         Player.Top
                     );
                     m.Visible = true;
-                    shootMedia.controls.play();
+                    PlayShoot();
                     break;
                 }
             }
@@ -284,86 +281,36 @@ namespace SpaceShooter3
             {
                 if (!m.Visible)
                 {
-                    int index = rnd.Next(0, enemies.Length);
-                    if (enemies[index].Visible)
-                    {
-                        m.Location = new Point(
-                            enemies[index].Left + enemies[index].Width / 2 - m.Width / 2,
-                            enemies[index].Bottom
-                        );
-                        m.Visible = true;
-                        break;
-                    }
+                    int i = rnd.Next(enemies.Length);
+                    m.Location = new Point(
+                        enemies[i].Left + enemies[i].Width / 2 - m.Width / 2,
+                        enemies[i].Bottom
+                    );
+                    m.Visible = true;
+                    break;
                 }
             }
         }
 
-        private void MoveEnemiesMunition()
+        private void GameOver(string text)
         {
-            foreach (var m in enemiesMunition)
-            {
-                if (m.Visible)
-                {
-                    m.Top += enemiesMunitionSpeed;
+            if (gameIsOver) return;
+            gameIsOver = true;
 
-                    if (m.Top > Height)
-                        m.Visible = false;
+            StopTimers();
+            gameMedia.controls.stop();
 
-                    if (Player.Visible && m.Bounds.IntersectsWith(Player.Bounds))
-                    {
-                        m.Visible = false;
-                        explosionMedia.settings.volume = 30;
-                        explosionMedia.controls.play();
-                        Player.Visible = false;
-                        GameOver("Game Over");
-                    }
-                }
-            }
-        }
-
-        private void MoveEnemies(PictureBox[] array, int speed)
-        {
-            foreach (var e in array)
-            {
-                e.Top += speed;
-                if (e.Top > Height) e.Top = -rnd.Next(100, 600);
-            }
-        }
-
-        private void Collision()
-        {
-            foreach (var enemy in enemies)
-            {
-                foreach (var m in munitions)
-                {
-                    if (m.Visible && enemy.Visible && m.Bounds.IntersectsWith(enemy.Bounds))
-                    {
-                        explosionMedia.controls.play();
-                        m.Visible = false;
-                        enemy.Top = -rnd.Next(200, 600);
-                        score += 10;
-                    }
-                }
-
-                if (enemy.Bounds.IntersectsWith(Player.Bounds))
-                {
-                    explosionMedia.controls.play();
-                    Player.Visible = false;
-                    GameOver("Game Over");
-                }
-            }
-        }
-
-        private void GameOver(string message)
-        {
-            label.Text = message;
-            label.Location = new Point((this.ClientSize.Width - label.Width) / 2, 150);
+            label.Text = text;
+            CenterLabel();
             label.Visible = true;
             ReplayBtn.Visible = true;
             ExitBtn.Visible = true;
+        }
 
-            gameMedia.controls.stop();
-            StopTimers();
+        private void CenterLabel()
+        {
+            label.Left = (ClientSize.Width - label.Width) / 2;
+            label.Top = 100;
         }
 
         private void StartTimers()
@@ -382,15 +329,14 @@ namespace SpaceShooter3
             EnemiesMunitionTimer.Stop();
         }
 
-        private void ReplayBtn_Click(object sender, EventArgs e) {
-            this.Controls.Clear();
-            InitializeComponent();
-            Form1_Load(e, e);
+        private void ReplayBtn_Click(object sender, EventArgs e)
+        {
+            Application.Restart();
         }
 
         private void ExitBtn_Click(object sender, EventArgs e)
         {
-            Environment.Exit(1);
+            Application.Exit();
         }
     }
 }

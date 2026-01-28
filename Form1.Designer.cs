@@ -113,9 +113,13 @@
             label.AutoSize = true;
             label.Font = new Font("New York Escape", 18F, FontStyle.Regular, GraphicsUnit.Point, 0);
             label.ForeColor = Color.Snow;
-            label.Location = new Point(282, 150);
+            label.AutoSize = true;
+
+            label.PerformLayout();
+            label.Left = (ClientSize.Width - label.Width) / 2;
+            label.Top = 100;
+
             label.Name = "label";
-            label.Size = new Size(0, 36);
             label.TabIndex = 5;
             label.TextAlign = ContentAlignment.MiddleCenter;
             label.Visible = false;
